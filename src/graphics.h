@@ -1,8 +1,13 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#if _WIN64
 #include "SDL.h"
 #include "SDL_video.h"
+#else
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_video.h>
+#endif
 
 #define SCALE 10
 

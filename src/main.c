@@ -80,7 +80,11 @@ uint8_t chip8_fontset[80] =
 int loadROM(char *filename){
 	FILE *fp;
 
+	#if _WIN64
+	fp = fopen_s(filename, "rb");
+	#else
 	fp = fopen(filename, "rb");
+	#endif
 	if(!fp) return -1;
 
 	return fread(memory+PGM_ROM_START, 1, MEM_SIZE-PGM_ROM_START, fp);
