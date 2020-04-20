@@ -417,7 +417,7 @@ int emulateCycle(){
 	if(delay_timer) --delay_timer;
 	if(sound_timer > 0) {	// TODO: Make actual tone
 		printf("BEEP\n");
-		if(sound_timer == 1) printf("BEEP\n");
+		//if(sound_timer == 1) printf("BEEP\n");
 		--sound_timer;
 	} 
 
@@ -454,7 +454,7 @@ int main(int argc, char *argv[]){
 
 	//Load ROM
 	char path_name[256];
-	sprintf(path_name, "/Users/alexwalley/Code/CHIP-8-Emulator/GAMES/%s.ch8", game_name);
+	sprintf(path_name, "./GAMES/%s.ch8", game_name);
 
 	printf("Loading ROM...\n");
 	if(loadROM(path_name) <= 0) { fprintf(stderr, "Failed to open ROM."); exit(1); }
