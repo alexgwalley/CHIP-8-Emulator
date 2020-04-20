@@ -8,7 +8,7 @@ What is this?
 
 How can I run/build this?
 -------------------
-- Simple DirectMedia Layer 2 (SDL 2) is a requisite. If the libs and includes are in a different folder, you may need to modify the make file so that GCC can refer to them correctly.
+- Simple DirectMedia Layer 2 (SDL 2) is a requisite. If the libs and includes are in a different folder, you may need to modify the <code>Makefile</code> so that GCC can refer to them correctly.
 - If on **Windows**:
 - Make new project/solution in Visual Studio Code and include the files in the <code>src</code> folder. Link the Include and Lib folders to the correct SDL2 directories on your machine. Build!
 - If on **UNIX** machine: 
