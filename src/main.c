@@ -429,10 +429,9 @@ int emulateCycle(){
 	return 0;
 }
 
-void delay(int number_of_seconds){ // Maybe better option with interrupt? Does C do that? 
-	int milli_seconds = 1000 * number_of_seconds;
-	clock_t start_time = clock();
-	while (clock() < start_time + milli_seconds) ;
+void delay(clock_t num_millis){ // Maybe better option with interrupt? Does C do that? 
+	clock_t end_time = clock() + num_millis;
+	while(clock() < end_time);
 }
 
 int main(int argc, char *argv[]){
@@ -502,7 +501,7 @@ int main(int argc, char *argv[]){
 	    if(emulateCycle() < 0) quit = 1;
 	    if(draw_flag) { renderScreen(gfx); draw_flag = 0; }
 
-	    delay(1000/60); // freq = 60Hz
+	    delay(CLOCKS_PER_SEC/60); // freq = 60Hz
 	}
 
 	// Clean up
