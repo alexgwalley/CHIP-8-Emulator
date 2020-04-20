@@ -81,11 +81,12 @@ int loadROM(char *filename){
 	FILE *fp;
 
 	#if _WIN64
-	fp = fopen_s(filename, "rb");
+	if (fopen_s(&fp, filename, "rb") != 0) return -1;
 	#else
 	fp = fopen(filename, "rb");
+	if (!fp) return -1;
 	#endif
-	if(!fp) return -1;
+	
 
 	return fread(memory+PGM_ROM_START, 1, MEM_SIZE-PGM_ROM_START, fp);
 }
@@ -458,7 +459,12 @@ int main(int argc, char *argv[]){
 
 	//Load ROM
 	char path_name[256];
+#if _WIN64
+	sprintf_s(path_name, 256, "./GAMES/%s.ch8", game_name);
+#else
 	sprintf(path_name, "./GAMES/%s.ch8", game_name);
+#endif // _WIN64
+
 
 	printf("Loading ROM...\n");
 	if(loadROM(path_name) <= 0) { fprintf(stderr, "Failed to open ROM."); exit(1); }
