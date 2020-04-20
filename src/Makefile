@@ -5,7 +5,7 @@ main.o: main.c
 	gcc -c main.c
 
 graphics.o: graphics.c graphics.h
-	gcc -c graphics.c
+	gcc -c graphics.c -I/usr/local/include/SDL2 -L/usr/local/lib -lSDL2
 
 input.o: input.c input.h
-	gcc -c input.c
+	gcc -c input.c -I/usr/local/include/SDL2 -L/usr/local/lib -lSDL2

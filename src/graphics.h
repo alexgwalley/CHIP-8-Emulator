@@ -1,9 +1,8 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_video.h>
-#include <SDL2/SDL_ttf.h>
+#include "SDL.h"
+#include "SDL_video.h"
 
 #define SCALE 10
 
@@ -12,8 +11,6 @@
 
 extern SDL_Window *window;
 extern SDL_Renderer *renderer;
-
-extern TTF_Font *font;
 
 extern void clearDisplay();
 
