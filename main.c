@@ -19,9 +19,9 @@
 #define PGM_ROM_START 0x200
 uint8_t memory[MEM_SIZE];
 
-// CPU V0-VF, VF = flags register
-uint16_t opcode;
+// CPU has registers V0-VF, VF = flags register
 uint8_t V[16]; 	// Registers
+uint16_t opcode;
 
 uint16_t I; 	// Index register
 uint16_t PC; 	// Program counter
@@ -75,28 +75,15 @@ uint8_t chip8_fontset[80] =
 
 /* Opens .ch8 file (ROM) 
  * and loads it into memory.
+ * returns the number of bytes read
  */	
-void loadROM(char *filename){
-
+int loadROM(char *filename){
 	FILE *fp;
-	int num_bytes_read;
 
 	fp = fopen(filename, "rb");
-	if(!fp){
-		fprintf(stderr, "Failed to open ROM.");
-		exit(1);
-	}
+	if(!fp) return -1;
 
-	num_bytes_read = fread(memory+PGM_ROM_START, 1, 
-						   MEM_SIZE-PGM_ROM_START, fp);
-
-	printf("Bytes Loaded: 0x%x (%03d)\n", num_bytes_read, num_bytes_read);
-
-	if(num_bytes_read <= 0){
-		fprintf(stderr, "Failed to read ROM.");
-		exit(1);
-	}
-
+	return fread(memory+PGM_ROM_START, 1, MEM_SIZE-PGM_ROM_START, fp);
 }
 
 /* Loads the CHIP-8 font
@@ -109,30 +96,43 @@ void loadFontSet(){
 	}
 }
 
+/*  Dumps the values on the stack
+ *	to standard output, meant
+ *  for debugging
+ */
 void printStack(){
 	printf("Stack Pointer: 0x%02X\n", SP);
-	for(int i = 0; i < STACK_SIZE && stack[i] != 0; i++){
+	for(int i = 0; i < STACK_SIZE && stack[i] != 0; i++)
 		printf("(%d) 0x%02X\n", i, stack[i]);
-	}
 }
 
+/*  Sets delay_timer to value
+ *	in register intexed by reg
+ */
 void setDelayTimer(int reg){
-	// struct timespec now;
-	// clock_gettime(CLOCK_MONOTONIC, &now);
-	// delay_timer = now.tv_nsec + (uint64_t)(V[reg])*(1e9/60);
-	// printf("\nDelay Offset: %fms\n", (uint64_t)(V[reg])*(1e9/60)/1e6);
+	/*
+	struct timespec now;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	delay_timer = now.tv_nsec + (uint64_t)(V[reg])*(1e9/60);
+	printf("\nDelay Offset: %fms\n", (uint64_t)(V[reg])*(1e9/60)/1e6);
+	*/
 	delay_timer = V[reg];
 }
 
+/*  Returns the delay_timer value
+ *	If negative, returns zero
+ */
 uint8_t getDelayTimer(){
-	// struct timespec now;
-	// clock_gettime(CLOCK_MONOTONIC, &now);
+	/*
+	struct timespec now;
+	clock_gettime(CLOCK_MONOTONIC, &now);
 
-	// if (now.tv_nsec < delay_timer) { // Still time left
-	// 	return (uint8_t)((delay_timer - now.tv_nsec) * (60 / 1e9));
-	// }
+	if (now.tv_nsec < delay_timer) { // Still time left
+		return (uint8_t)((delay_timer - now.tv_nsec) * (60 / 1e9));
+	}
 
-	// return 0;
+	return 0;
+	*/
 	return (delay_timer > 0 ) ? delay_timer : 0;
 }
 
@@ -150,20 +150,14 @@ void initialize(){
 	SP = 0;
 
 	draw_flag = 0;
+	
+	initDisplay();						// Clear Display
 
-	// Clear Display
-	initDisplay();
+	memset(stack, 0, sizeof(stack));	// Clear Stack
+	memset(V, 0x00, sizeof(V));			// Clear registers
+	memset(memory, 0x00, MEM_SIZE); 	// Clear memory
 
-	// Clear Stack
-	memset(stack, 0, sizeof(stack));
-	// Clear registers
-	memset(V, 0x00, sizeof(V));
-	// Clear memory
-	memset(memory, 0x00, MEM_SIZE);
-
-	// Load fontset
 	loadFontSet();
-
 
 	// Reset Timers
 	delay_timer = 0;
@@ -171,6 +165,11 @@ void initialize(){
 
 }
 
+/*	The meat of the program. 
+ *  Handles Fetching, decoding, 
+ *  and executing the next opcode
+ *  at PC.
+ */
 int emulateCycle(){
 
 
@@ -414,48 +413,61 @@ int emulateCycle(){
 	
 	}
 
+	// Decrement timers
 	if(delay_timer) --delay_timer;
-	if(sound_timer > 0) {
+	if(sound_timer > 0) {	// TODO: Make actual tone
 		printf("BEEP\n");
 		if(sound_timer == 1) printf("BEEP\n");
 		--sound_timer;
 	} 
 
 	return 0;
-
-
 }
 
-void delay(int number_of_seconds){
-	// Converting time into milli_seconds
+void delay(int number_of_seconds){ // Maybe better option with interrupt? Does C do that? 
 	int milli_seconds = 1000 * number_of_seconds;
-	// Storing start time
 	clock_t start_time = clock();
-	// looping till required time is not achieved
 	while (clock() < start_time + milli_seconds) ;
 }
 
-int main(){
+int main(int argc, char *argv[]){
+
+	char *game_name;
+
+	if(argc > 2) {
+		fprintf(stderr, "Usage: %%PROGRAM_NAME%% [GAME_NAME]\n");
+		exit(1);
+	}else if(argc == 2){
+		game_name = argv[1];
+	}else{
+		printf("Playing default game: pong\n");
+		game_name = "ZeroPong";
+	}
+
+	SDL_Event e;
+	int quit;
+	int pause;
 
 	//Initialize CHIP-8
 	printf("Initializing CPU...\n");
 	initialize();
 
 	//Load ROM
+	char path_name[256];
+	sprintf(path_name, "/Users/alexwalley/Code/CHIP-8-Emulator/GAMES/%s.ch8", game_name);
+
 	printf("Loading ROM...\n");
-	loadROM("/Users/alexwalley/Code/CHIP-8-Emulator/GAMES/Tetris.ch8");
+	if(loadROM(path_name) <= 0) { fprintf(stderr, "Failed to open ROM."); exit(1); }
 	printf("ROM loaded successfully!\n");
 
-	SDL_Event e;
-	int quit = 0;
-	int pause = 0;
 
-	while (quit == 0){ // Slow!
+	quit = 0;
+	pause = 0;
+	while (quit == 0){ // Slow! Maybe better way
 	    while (SDL_PollEvent(&e)){
 	        if (e.type == SDL_QUIT) quit = 1;
 	        
-	        if(e.key.keysym.scancode == 0x13 && e.key.type == SDL_KEYDOWN)
-	        	pause = (pause) ? 0 : 1;
+	        if(e.key.keysym.scancode == 0x13 && e.key.type == SDL_KEYDOWN) pause = (pause) ? 0 : 1;
 	        
 	        updateKeys(&e.key);
 	    }
@@ -476,11 +488,8 @@ int main(){
 	    };
 
 	    // Step Emulator
-
 		if(debug) printf("PC: 0x%03X ", PC);
-
 	    if(emulateCycle() < 0) quit = 1;
-
 	    if(draw_flag) { renderScreen(gfx); draw_flag = 0; }
 
 	    delay(1000/60); // freq = 60Hz
